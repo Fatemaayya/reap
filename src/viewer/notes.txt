@@ -1,0 +1,413 @@
+load a feature layer, then group features based on property
+   
+   postDOMLoad = () => {
+
+        //add layers
+        this.featureVectorSource = new VectorSource({
+            format: new GeoJSON(),
+            url: function (extent) {
+                return (
+                    "http://103.248.60.18:8060/geoserver/reapdata/ows?service=WFS&" +
+                    "version=1.0.0&request=GetFeature&typename=reapdata:realestate&maxFeatures=10000&" +
+                    "outputFormat=application/json&srsname=EPSG:4326&" +
+                    "bbox=" +
+                    extent.join(",") +
+                    ",EPSG:4326"
+                );
+            },
+            strategy: bboxStrategy
+        });
+
+        // calculate stats from features
+
+        const colors = ["#003f5c", "#2f4b7c", "#665191", "#a05195", "#d45087", "#f95d6a", "#ff7c43", "#ffa600"];
+        const colorMap: { [propType: string]: string } = {};
+
+        this.featureVectorSource.once("change", () => {
+            if (this.featureVectorSource.getState() === "ready") {
+                if (!this.featureVectorSource.isEmpty()) {
+                    this.reapMap.getView().fit(this.featureVectorSource.getExtent(), {
+                        duration: 1500
+                    });
+
+                    const statusData: { [key: string]: number } = {};
+                    const projTypeData: { [key: string]: number } = {};
+
+                    this.featureVectorSource.forEachFeature(function (feature) {
+                        var properties = feature.getProperties();
+
+                        // calc status stats
+                        if (statusData[properties.Status]) {
+                            statusData[properties.Status]++;
+                        } else {
+                            statusData[properties.Status] = 1;
+                        }
+
+                        // calc Project_Ty stats
+                        if (projTypeData[properties.Project_Ty]) {
+                            projTypeData[properties.Project_Ty]++;
+                        } else {
+                            projTypeData[properties.Project_Ty] = 1;
+                        }
+                    });
+
+                    const statusStats: { name: string; value: number; itemStyle: { color: string } }[] = [];
+                    Object.keys(statusData).forEach((statusKey) => {
+                        const value = statusData[statusKey];
+                        statusStats.push({
+                            name: statusKey,
+                            value: value,
+                            itemStyle: { color: statusKey.toLowerCase() === "new" ? "#2f4554" : "#61a0a8" }
+                        });
+                    });
+
+                    const projTypeStats: { name: string; value: number; itemStyle: { color: string } }[] = [];
+                    Object.keys(projTypeData).forEach((projTypeKey) => {
+                        const value = projTypeData[projTypeKey];
+                        const color = colors.pop() + "";
+                        projTypeStats.push({
+                            name: projTypeKey,
+                            value: value,
+                            itemStyle: { color }
+                        });
+                        colorMap[projTypeKey] = color;
+                    });
+
+                    this.props.updateStatData(statusStats, projTypeStats);
+                }
+            }
+        });
+
+        // add layer
+
+        var vector = new VectorLayer({
+            source: this.featureVectorSource,
+
+            style: (feature) => {
+                const { filterStatus, filterType, selectedFeatures } = this.props;
+                const projectName = feature.get("Project_Na");
+                const projectType = feature.get("Project_Ty");
+                const status = feature.get("Status");
+
+                let isFiltered = false;
+                if (filterType.includes(projectType)) {
+                    isFiltered = true;
+                }
+                if (filterStatus.includes(status)) {
+                    isFiltered = true;
+                }
+
+                let isSelected = false;
+                if (selectedFeatures.length) {
+                    const selectedFeatureIds = selectedFeatures.map((feature) => feature.getId());
+                    if (selectedFeatureIds.includes(feature.getId())) {
+                        isSelected = true;
+                    }
+                }
+
+                const fill =
+                    filterType.length || filterStatus.length
+                        ? new Fill({ color: isFiltered ? colorMap[projectType] : "#ccc" })
+                        : new Fill({ color: colorMap[projectType] });
+                const stroke = new Stroke({ color: isSelected ? "rgb(0,255,255)" : status.toLowerCase() === "new" ? "#2f4554" : "#61a0a8", width: 4 });
+
+                let text = projectName.length > 12 ? projectName.substr(0, 9) + "..." : projectName;
+                if (filterType.length || filterStatus.length) {
+                    text = isFiltered ? text : "";
+                }
+
+                return new Style({
+                    // image: new CircleStyle({
+                    //     radius: 10,
+                    //     fill: fill,
+                    //     stroke: stroke
+                    // })
+
+                    image: new RegularShape({
+                        fill: fill,
+                        stroke: stroke,
+                        points: 4,
+                        radius: 10,
+                        angle: Math.PI / 4
+                    }),
+                    text:
+                        this.reapMapView.getZoom() > 14
+                            ? new Text({
+                                  textAlign: "center",
+                                  textBaseline: "middle",
+                                  font: "16px Helvetica, Arial Bold, sans-serif",
+                                  text: text,
+                                  fill: new Fill({ color: "#222" }), //fill,
+                                  stroke: new Stroke({ color: "#fff", width: 2 }),
+                                  // offsetX: offsetX,
+                                  offsetY: -15
+                                  // placement: placement,
+                                  // maxAngle: maxAngle,
+                                  // overflow: overflow,
+                                  // rotation: rotation
+                              })
+                            : undefined
+                });
+            }
+        });
+
+        this.reapMap.addLayer(vector);
+
+        // add controls
+        const template = "Latitude: {y}, Longitude: {x}";
+        const mousePositionControl = new MousePosition({
+            target: "footerCoords",
+            coordinateFormat: function (coord) {
+                return olCoordinateFormat(coord as number[], template, 6);
+            },
+            projection: olGetProj("EPSG:4326")
+        });
+        this.reapMap.addControl(mousePositionControl);
+
+        const updateFooterZoom = (zoomVal: number) => {
+            var zoom = Math.round(zoomVal);
+            const footerZoomLevel = document.getElementById("footerZoomLevel");
+            if (footerZoomLevel) {
+                footerZoomLevel.innerText = `Zoom Level: ${zoom}`;
+            }
+        };
+
+        // event listeners
+        this.reapMapView.on("change:resolution", (event) => {
+            var zoom = Math.round(event.target.getZoom());
+            updateFooterZoom(zoom);
+        });
+
+        window.addEventListener("loadDefaultLayers", this.event_addDefaultLayers);
+        window.addEventListener("changeBasemap", this.event_changeBasemap);
+        window.addEventListener("createBookmark", this.event_createBookmark);
+        window.addEventListener("gotoBookmark", this.event_gotoBookmark);
+        window.addEventListener("gotoExtent", this.event_gotoExtent);
+
+        window.addEventListener("zoomInEvent", () => {
+            this.reapMapView.setZoom((this.reapMapView.getZoom() || 0) + 1);
+        });
+
+        window.addEventListener("zoomOutEvent", () => {
+            this.reapMapView.setZoom((this.reapMapView.getZoom() || 0) - 1);
+        });
+
+        // hover style
+        var point: any = null;
+        // var line:any = null;
+        var displaySnap = (coordinate: any) => {
+            var closestFeature = vectorSource.getClosestFeatureToCoordinate(coordinate);
+            if (closestFeature === null) {
+                point = null;
+                // line = null;
+            } else {
+                var geometry = closestFeature.getGeometry();
+                var closestPoint = geometry.getClosestPoint(coordinate);
+                if (point === null) {
+                    point = new Point(closestPoint);
+                } else {
+                    point.setCoordinates(closestPoint);
+                }
+                // if (line === null) {
+                //     line = new LineString([coordinate, closestPoint]);
+                // } else {
+                //     line.setCoordinates([coordinate, closestPoint]);
+                // }
+            }
+            this.reapMap.render();
+        };
+
+        this.reapMap.on("pointermove", (evt) => {
+            if (evt.dragging) {
+                return;
+            }
+            var coordinate = this.reapMap.getEventCoordinate(evt.originalEvent as MouseEvent);
+            displaySnap(coordinate);
+        });
+
+        this.reapMap.on("click", (evt) => {
+            if (!this.reapMap.hasFeatureAtPixel(evt.pixel)) {
+                this.props.resetDataFilter();
+            }
+        });
+
+        var stroke = new Stroke({
+            color: "rgba(255,255,0,0.9)",
+            width: 3
+        });
+        var style = new Style({
+            stroke: stroke,
+            image: new CircleStyle({
+                radius: 10,
+                stroke: stroke
+            })
+        });
+        vector.on("postrender", function (evt) {
+            var vectorContext = olGetVectorContext(evt);
+            vectorContext.setStyle(style);
+            if (point !== null) {
+                vectorContext.drawGeometry(point);
+            }
+            // if (line !== null) {
+            //   vectorContext.drawGeometry(line);
+            // }
+        });
+
+        // cursor point on feature hover
+        const mapTargetEl = this.reapMap.getTargetElement();
+        this.reapMap.on("pointermove", (evt) => {
+            if (evt.dragging || !mapTargetEl) {
+                return;
+            }
+
+            const pixel = this.reapMap.getEventPixel(evt.originalEvent);
+            const hit = this.reapMap.hasFeatureAtPixel(pixel);
+
+            if (hit) {
+                mapTargetEl.style.cursor = "pointer";
+            } else {
+                mapTargetEl.style.cursor = "";
+            }
+        });
+
+        // feature selection
+
+        // select interaction working on "click"
+        const selectInteraction = new olSelectInteraction({
+            condition: olClickEvent
+            style: function (feature) {
+                const projectName = feature.get("Project_Na");
+                const projectType = feature.get("Project_Ty");
+                // const status = feature.get("Status");
+
+                const fill = new Fill({ color: colorMap[projectType] });
+                const stroke = new Stroke({ color: "rgb(0,255,255)", width: 4 });
+
+                return new Style({
+                    // image: new CircleStyle({
+                    //     radius: 10,
+                    //     fill: fill,
+                    //     stroke: stroke
+                    // })
+
+                    image: new RegularShape({
+                        fill: fill,
+                        stroke: stroke,
+                        points: 4,
+                        radius: 10,
+                        angle: Math.PI / 4
+                    }),
+
+                    text: new Text({
+                        textAlign: "center",
+                        textBaseline: "middle",
+                        font: "20px Helvetica, Arial Bold, sans-serif",
+                        text: projectName,
+                        fill: new Fill({ color: "#222" }), //fill,
+                        // stroke: new Stroke({ color: "#fff", width: 1 }),
+                        // offsetX: offsetX,
+                        offsetY: -15
+                        // placement: placement,
+                        // maxAngle: maxAngle,
+                        // overflow: overflow,
+                        // rotation: rotation
+                    })
+                });
+            }
+        });
+        this.reapMap.addInteraction(selectInteraction);
+
+        selectInteraction.on("select", (e) => {
+            const features = e.target.getFeatures().getArray();
+
+                // calculate stats
+                const statusData: { [key: string]: number } = {};
+                const projTypeData: { [key: string]: number } = {};
+
+                features.forEach((feature: any) => {
+                    const statusVal = feature.get("Status");
+                    const projectTypeVal = feature.get("Project_Ty");
+
+                    // calc status stats
+                    if (statusData[statusVal]) {
+                        statusData[statusVal]++;
+                    } else {
+                        statusData[statusVal] = 1;
+                    }
+
+                    // calc Project_Ty stats
+                    if (projTypeData[projectTypeVal]) {
+                        projTypeData[projectTypeVal]++;
+                    } else {
+                        projTypeData[projectTypeVal] = 1;
+                    }
+                });
+
+                const statusStats: { name: string; value: number; itemStyle: { color: string } }[] = [];
+                const projTypeStats: { name: string; value: number; itemStyle: { color: string } }[] = [];
+
+                Object.keys(statusData).forEach((statusKey) => {
+                    const value = statusData[statusKey];
+                    statusStats.push({
+                        name: statusKey,
+                        value: value,
+                        itemStyle: { color: statusKey.toLowerCase() === "new" ? "#2f4554" : "#61a0a8" }
+                    });
+                });
+
+                Object.keys(projTypeData).forEach((projTypeKey) => {
+                    const value = projTypeData[projTypeKey];
+                    const color = colorMap[projTypeKey];
+                    projTypeStats.push({
+                        name: projTypeKey,
+                        value: value,
+                        itemStyle: { color }
+                    });
+                });
+
+            this.props.selectFeatures(features /*, statusStats, projTypeStats */);
+        });
+
+        // popup
+        var popupOverlay = new PopupFeature({
+            popupClass: "default anim",
+            select: selectInteraction,
+            canFix: true,
+            template: (feature: any) => {
+                const layerName = feature.get("layerName");
+                if (this.props.layersInfo[layerName]) {
+                    const info = this.props.layersInfo[layerName].info;
+
+                    const attributes: any = {};
+                    info.displayAttributes.forEach((attribtueName) => {
+                        attributes[attribtueName] = { title: attribtueName };
+                    });
+
+                    return {
+                        title: (f: any) => feature.get(info.reapUIDPropertyName),
+                        attributes
+                    };
+                }
+            }
+        });
+
+        this.reapMap.addOverlay(popupOverlay as any);
+
+        // defaults
+        updateFooterZoom(this.reapMapView.getZoom() || 0);
+    };
+
+
+
+    ======================================
+
+
+        _addDefaultLayers = () => {
+        // this.props.layersInfo.forEach((layerInfo) => {
+        //     // const layer = getLayer(layerInfo);
+        //     // if (layer) {
+        //     //     this.reapMap.getLayers().insertAt(1, layer);
+        //     //     layer.setVisible(layerInfo.defaultVisibility);
+        //     // }
+        // });
+    };

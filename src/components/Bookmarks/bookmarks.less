@@ -1,0 +1,13 @@
+.ant-list-item-action {
+    margin: 0;
+    .dynamicDeleteIcon {
+        color: #ff4d4f;
+        &::after {
+            content: "delete_outline";
+        }
+
+        &:hover::after {
+            content: "delete";
+        }
+    }
+}

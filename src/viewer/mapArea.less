@@ -1,0 +1,186 @@
+.baseEffect-grayscale {
+    .baseMapLayer {
+        filter: grayscale(1);
+    }
+}
+
+.baseEffect-blur {
+    .baseMapLayer {
+        filter: blur(5px);
+    }
+}
+
+.baseEffect-invert {
+    .baseMapLayer {
+        filter: invert(100%);
+    }
+}
+
+.baseEffect-saturate {
+    .baseMapLayer {
+        filter: saturate(8);
+    }
+}
+
+.baseEffect-hueShift {
+    .baseMapLayer {
+        filter: hue-rotate(90deg) saturate(150%);
+    }
+}
+
+.baseEffect-sepia {
+    .baseMapLayer {
+        filter: sepia(100%);
+    }
+}
+
+.react-geo-layer-switcher {
+    bottom: 10px !important;
+    left: 10px;
+
+    .clip {
+        width: 50px;
+        height: 50px;
+    }
+}
+
+.ol-mouse-position {
+    right: initial;
+    top: initial;
+    position: relative;
+}
+
+.ol-control {
+    &.material-icons {
+        font-size: 14px;
+    }
+
+    button {
+        background-color: #65b39c;
+        height: 2em;
+        width: 2em;
+
+        &:hover,
+        &:focus {
+            outline: none;
+        }
+    }
+}
+
+// .ol-control {
+//     background-color: rgba(0, 0, 0, 0.3);
+// }
+
+// .ol-control:hover {
+//     background-color: rgba(0, 0, 0, 0.5);
+// }
+
+.ol-zoom {
+    top: initial;
+    left: initial;
+    bottom: 42px;
+    right: 6px;
+    padding: 0;
+}
+
+.ol-attribution {
+    bottom: 5px;
+    right: 5px;
+    button {
+        margin: 0;
+    }
+}
+
+.ol-scale-bar {
+    .ol-scale-singlebar:first-of-type:nth-last-child(2) {
+        background-color: #2f6b59 !important;
+    }
+}
+
+// tooltip
+.ol-tooltip {
+    position: relative;
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: 4px;
+    color: white;
+    padding: 4px 8px;
+    opacity: 0.7;
+    white-space: nowrap;
+    font-size: 12px;
+}
+.ol-tooltip-measure {
+    opacity: 1;
+    font-weight: bold;
+}
+.ol-tooltip-static {
+    background-color: #ffcc33;
+    color: black;
+    border: 1px solid white;
+}
+.ol-tooltip-measure:before,
+.ol-tooltip-static:before {
+    border-top: 6px solid rgba(0, 0, 0, 0.5);
+    border-right: 6px solid transparent;
+    border-left: 6px solid transparent;
+    content: "";
+    position: absolute;
+    bottom: -6px;
+    margin-left: -7px;
+    left: 50%;
+}
+.ol-tooltip-static:before {
+    border-top-color: #ffcc33;
+}
+
+// popup
+.ol-popup {
+    .ol-popupfeature table tr td:nth-of-type(odd) {
+        font-weight: bold;
+    }
+
+    h1 {
+        font-size: 1.5em;
+    }
+
+    &.ol-fixed {
+        top: 50px !important;
+    }
+
+    .closeBox {
+        background-color: #65b39c;
+    }
+}
+
+// react-geo
+
+button.react-geo-togglebutton {
+    background-color: #65b39c;
+    border: none;
+    border-radius: 2px 2px 0 0;
+    cursor: default;
+
+    &:focus {
+        background-color: #65b39c;
+    }
+
+    &:hover {
+        background-color: rgba(0, 60, 136, 0.7);
+    }
+
+    &.btn-pressed {
+        background-color: #2f6b59;
+    }
+}
+
+@keyframes animateLocationIcon {
+    0% {
+        color: white;
+    }
+    100% {
+        color: black;
+    }
+}
+
+.active_gps {
+    animation: animateLocationIcon 1.5s linear infinite alternate;
+}

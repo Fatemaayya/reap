@@ -1,0 +1,45 @@
+[
+    {
+        "name": "Post-COVID Concerns",
+        "url": "https://prod-apnortheast-a.online.tableau.com/t/anmconsultants/views/FinalAnalysis1_20inv_pitch/POST-COVIDCONCERNS"
+    },
+    {
+        "name": "Projects Awareness",
+        "url": "https://prod-apnortheast-a.online.tableau.com/t/anmconsultants/views/FinalAnalysis1_20inv_pitch/PROJECTSAWARENESS"
+    },
+    {
+        "name": "Extended Projects",
+        "url": "https://prod-apnortheast-a.online.tableau.com/t/anmconsultants/views/FinalAnalysis1_20inv_pitch/ExtendrdProjects"
+    },
+    {
+        "name": "Product Mix of the Market",
+        "url": "https://prod-apnortheast-a.online.tableau.com/t/anmconsultants/views/FinalAnalysis1_20inv_pitch/ProductMixoftheMarket"
+    },
+    {
+        "name": " Offtake of Plots  for Raipur City As Per RERA Data from April 2018 to Dec 2019",
+        "url": "https://prod-apnortheast-a.online.tableau.com/t/anmconsultants/views/FinalAnalysis1_20inv_pitch/OfftakeofPlotsforRaipurCityAsPerRERADatafromJune2018toDec2019"
+    },
+    {
+        "name": "Plots Inventory Offtake for Raipur City As Per RERA Data from June 2018 to Dec 2019",
+        "url": "https://prod-apnortheast-a.online.tableau.com/t/anmconsultants/views/FinalAnalysis1_20inv_pitch/PlotsInventoryOfftakeforRaipurCityAsPerRERADatafromJune2018toDec2019"
+    },
+    {
+        "name": "Offtake of Apartments for Raipur City As Per RERA Data from April 2018 to Dec 2019",
+        "url": "https://prod-apnortheast-a.online.tableau.com/t/anmconsultants/views/FinalAnalysis1_20inv_pitch/OfftakeofApartmentsforRaipurCityAsPerRERADatafromJune2018toDec2019"
+    },
+
+    {
+        "name": "Apartments Inventory Offtake for Raipur City As Per RERA Data from April 2018 to Dec 2019",
+        "url": "https://prod-apnortheast-a.online.tableau.com/t/anmconsultants/views/FinalAnalysis1_20inv_pitch/ApartmentsInventoryOfftakeforRaipurCityAsPerRERADatafromJune2018toDec2019"
+    },
+
+    {
+        "name": "Offtake of Group Housing/Villas  for Raipur City As Per RERA Data from April 2018 to Dec 2019",
+        "url": "https://prod-apnortheast-a.online.tableau.com/t/anmconsultants/views/FinalAnalysis1_20inv_pitch/OfftakeofGroupHousingVillasforRaipurCityAsPerRERADatafromApril2018toDec2019"
+    },
+
+    {
+        "name": "Group Housing/Villas Inventory Offtake for Raipur City As Per RERA Data from April 2018 to Dec 2019",
+        "url": "https://prod-apnortheast-a.online.tableau.com/t/anmconsultants/views/FinalAnalysis1_20inv_pitch/GroupHousingVillasInventoryOfftakeforRaipurCityAsPerRERADatafromJune2018toDec2019"
+    }
+]
